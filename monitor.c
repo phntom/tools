@@ -33,19 +33,19 @@ int main(int argc, char **argv) {
 
 	random_number = rand() % 100000000;
 
-	command_length = 68 + strlen(argv[1]) + strlen(tmp_folder);
+	command_length = 69 + strlen(tmp_folder) + strlen(argv[1]);
 
-	if (argc > 1) {
-		command_length += strlen(argv[1]);
+	if (argc > 2) {
+		command_length += strlen(argv[2]);
 	}
 
 	new_command = malloc(command_length);
 
-	if (argc > 1) {
+	if (argc > 2) {
 		// print to a file and post process
 		sprintf(new_command, "/usr/bin/env time -v -o %s/.monitor_%08d_time %s", tmp_folder, random_number, argv[1]);
 	} else {
-		// missing newline-chars
+		// no newline-chars specified, printing directly to stdout
 		// print to stdout
 		sprintf(new_command, "/usr/bin/env time -v %s", argv[1]);
 	}
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
 		return EXIT_FAILURE;
 	}
 
-	if (argc > 1) {
+	if (argc > 2) {
 
 		sprintf(new_command, "/usr/bin/env cat %s/.monitor_%08d_time | sed ':a;N;$!ba;s/\\n/%s/g'", 
 				tmp_folder, random_number, argv[2]);
@@ -75,9 +75,10 @@ int main(int argc, char **argv) {
 			fflush(stdout); 
 		}
 		
-		sprintf(new_command, "/usr/bin/env rm %s/.monitor_%08d_time", tmp_folder, random_number);
+		sprintf(new_command, "%s/.monitor_%08d_time", tmp_folder, random_number);
 		
-		system(new_command); 
+		unlink(new_command);
+		
 	}
 
 	free(new_command);
