@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
 	command_length = 68 + strlen(argv[1]) + strlen(tmp_folder);
 
 	if (argc > 1) {
-		command_length += strlen(argv[2]);
+		command_length += strlen(argv[1]);
 	}
 
 	new_command = malloc(command_length);
