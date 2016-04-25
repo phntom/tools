@@ -10,13 +10,23 @@ int main(int argc, char **argv) {
 
 	int return_val = 0;
 
-	char* new_command;
+	char* new_command = NULL;
 
 	char* tmp_folder = "/tmp";
 
-	int random_number;
+	char* output_path = NULL;
 
-	int command_length;
+	FILE* f = NULL;
+
+    char* line = NULL;
+
+	int random_number = 0;
+
+    size_t len = 0;
+
+    ssize_t read;
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	if (argc < 2) {
 		printf("%s: \"command <arguments>\" \"<newline-chars>\" \"<tmp-folder>\" \"<print-before>\" \"<print-after>\"\n", argv[0]);
@@ -33,17 +43,15 @@ int main(int argc, char **argv) {
 
 	random_number = rand() % 100000000;
 
-	command_length = 69 + strlen(tmp_folder) + strlen(argv[1]);
+	output_path = malloc(strlen(tmp_folder) + 24);
 
-	if (argc > 2) {
-		command_length += strlen(argv[2]);
-	}
+	sprintf(output_path, "%s/.monitor_%08d_time", tmp_folder, random_number);
 
-	new_command = malloc(command_length);
+	new_command = malloc(26 + strlen(output_path) + strlen(argv[1]));
 
 	if (argc > 2) {
 		// print to a file and post process
-		sprintf(new_command, "/usr/bin/env time -v -o %s/.monitor_%08d_time %s", tmp_folder, random_number, argv[1]);
+		sprintf(new_command, "/usr/bin/env time -v -o %s %s", output_path, argv[1]);
 	} else {
 		// no newline-chars specified, printing directly to stdout
 		// print to stdout
@@ -59,25 +67,34 @@ int main(int argc, char **argv) {
 
 	if (argc > 2) {
 
-		sprintf(new_command, "/usr/bin/env cat %s/.monitor_%08d_time | sed ':a;N;$!ba;s/\\n/%s/g'", 
-				tmp_folder, random_number, argv[2]);
+	    f = fopen(output_path, "r");
 
-		if (argc > 4) {
-			printf("%s", argv[4]);
-			fflush(stdout); 
-		}
-		
-		system(new_command);
+        if (f == NULL) {
+            exit(EXIT_FAILURE);
+        }
+
+        if (argc > 4) {
+            printf("%s", argv[4]);
+        }
+
+        while ((read = getline(&line, &len, f)) != EOF) {
+            len = strlen(line) - 1;
+            if (len >= 0) {
+                line[len] = '\0';
+            }
+            printf("%s%s", line, argv[2]);
+        }
+
+        fclose(f);
+
+        free(line);
 
 		if (argc > 5) {
-			fflush(stdout);
 			printf("%s\n", argv[5]);
 			fflush(stdout); 
 		}
-		
-		sprintf(new_command, "%s/.monitor_%08d_time", tmp_folder, random_number);
-		
-		unlink(new_command);
+
+		unlink(output_path);
 		
 	}
 
