@@ -7,26 +7,17 @@
 #include <string.h>
 
 int main(int argc, char **argv) {
-
 	int return_val = 0;
-
 	char* new_command = NULL;
-
 	char* tmp_folder = "/tmp";
-
 	char* output_path = NULL;
-
 	FILE* f = NULL;
-
-    char* line = NULL;
-
+	char* line = NULL;
 	int random_number = 0;
+	size_t len = 0;
+	ssize_t read;
 
-    size_t len = 0;
-
-    ssize_t read;
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	if (argc < 2) {
 		printf("%s: \"command <arguments>\" \"<newline-chars>\" \"<tmp-folder>\" \"<print-before>\" \"<print-after>\"\n", argv[0]);
@@ -40,11 +31,9 @@ int main(int argc, char **argv) {
 	prctl(PR_SET_PDEATHSIG, SIGHUP, 0, 0, 0);
 
 	srand(time(NULL));
-
 	random_number = rand() % 100000000;
 
 	output_path = malloc(strlen(tmp_folder) + 24);
-
 	sprintf(output_path, "%s/.monitor_%08d_time", tmp_folder, random_number);
 
 	new_command = malloc(26 + strlen(output_path) + strlen(argv[1]));
@@ -57,7 +46,7 @@ int main(int argc, char **argv) {
 		// print to stdout
 		sprintf(new_command, "/usr/bin/env time -v %s", argv[1]);
 	}
-        
+		
 	return_val = system(new_command);
 
 	if (return_val < 0) {
@@ -66,28 +55,25 @@ int main(int argc, char **argv) {
 	}
 
 	if (argc > 2) {
+		f = fopen(output_path, "r");
+		if (f == NULL) {
+			exit(EXIT_FAILURE);
+		}
 
-	    f = fopen(output_path, "r");
+		if (argc > 4) {
+			printf("%s", argv[4]);
+		}
 
-        if (f == NULL) {
-            exit(EXIT_FAILURE);
-        }
+		while ((read = getline(&line, &len, f)) != EOF) {
+			len = strlen(line) - 1;
+			if (len >= 0) {
+				line[len] = '\0';
+			}
+			printf("%s%s", line, argv[2]);
+		}
 
-        if (argc > 4) {
-            printf("%s", argv[4]);
-        }
-
-        while ((read = getline(&line, &len, f)) != EOF) {
-            len = strlen(line) - 1;
-            if (len >= 0) {
-                line[len] = '\0';
-            }
-            printf("%s%s", line, argv[2]);
-        }
-
-        fclose(f);
-
-        free(line);
+		fclose(f);
+		free(line);
 
 		if (argc > 5) {
 			printf("%s\n", argv[5]);
@@ -95,7 +81,6 @@ int main(int argc, char **argv) {
 		}
 
 		unlink(output_path);
-		
 	}
 
 	free(new_command);
